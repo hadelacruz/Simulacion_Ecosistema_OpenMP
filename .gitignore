@@ -1,0 +1,51 @@
+# --- Ejecutables y objetos -------------------------------------------------
+ecosim
+ecosim.exe
+ecosim_serial
+ecosim_serial.exe
+ecosim_tsan
+ecosim_tsan.exe
+*.o
+*.obj
+*.exe
+*.out
+*.dll
+*.a
+*.so
+
+# --- Salidas de la simulacion ----------------------------------------------
+# Se regeneran al ejecutar. Si necesitas versionar la corrida oficial que
+# entregas, renombrala (p. ej. entrega/resultados_final.log) y anadela con
+# `git add -f`.
+resultados.log
+*.log
+bench_*.csv
+
+# --- Depuracion -------------------------------------------------------------
+*.dSYM/
+*.stackdump
+core
+vgcore.*
+callgrind.out.*
+perf.data*
+gmon.out
+
+# --- Editores e IDEs --------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+compile_commands.json
+.cache/
+
+# --- Windows / OneDrive -----------------------------------------------------
+Thumbs.db
+desktop.ini
+*.lnk
+
+# --- macOS / Linux ----------------------------------------------------------
+.DS_Store
+
+# --- Excepciones: esto SI se versiona ---------------------------------------
+!scripts/bench.sh
+!.gitignore
