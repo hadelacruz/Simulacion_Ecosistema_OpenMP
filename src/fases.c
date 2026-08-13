@@ -1,39 +1,8 @@
-/* ============================================================================
- * fases.c - Nucleo de la simulacion.
- *
- * Cada fase de un tick se descompone en tres barridos sobre la cuadricula:
- *
- *   1. PROPONER  (solo lectura de `a`)   -> cada agente calcula a que celda
- *                                           quiere moverse. Sin escrituras
- *                                           compartidas: cero conflictos.
- *   2. RESOLVER  (solo lectura de `prop`)-> cada celda DESTINO mira a sus 8
- *                                           vecinos y decide quien la ocupa.
- *                                           Es un GATHER, no un scatter: cada
- *                                           iteracion escribe unicamente su
- *                                           propia posicion => no hace falta
- *                                           ni un solo atomic, critical o lock.
- *   3. APLICAR   (escribe en `b`)        -> cada celda calcula su estado
- *                                           siguiente. Escritura exclusiva.
- *
- * Las tres etapas son bucles `omp for` independientes separados por la
- * barrera implicita del work-sharing. El resultado es identico con 1 hilo o
- * con 64, y con cualquier politica de scheduling.
- *
- * Las directivas `omp for` de este archivo son HUERFANAS: se ligan a la
- * region paralela abierta en sim.c. Eso permite mantener el codigo modular
- * sin pagar un fork/join por fase.
- * ==========================================================================*/
 #include <string.h>
 
 #include "ecosim.h"
 #include "rng.h"
 
-/* ------------------------------------------------------------------------
- * Vecindario de Moore (8 vecinos) con frontera toroidal: el borde derecho
- * se conecta con el izquierdo y el superior con el inferior. Evita casos
- * especiales en los bordes y hace que todas las celdas tengan exactamente 8
- * vecinos, lo que a su vez uniformiza la regla de muerte de las plantas.
- * ---------------------------------------------------------------------- */
 static inline void vecinos8(int idx, int W, int H, int out[8])
 {
     const int x = idx % W;
@@ -49,9 +18,6 @@ static inline void vecinos8(int idx, int W, int H, int out[8])
     }
 }
 
-/* Elige uniformemente al azar un vecino cuyo ocupante sea del tipo `t`.
- * Muestreo por reservorio: una sola pasada, sin arreglo auxiliar. Devuelve
- * -1 si no hay ninguno. */
 static inline int elegir_vecino(const Celda *A, const int v[8],
                                 unsigned char t, uint32_t *st)
 {
@@ -91,13 +57,6 @@ static inline Celda celda_nueva(unsigned char tipo)
     Celda x; memset(&x, 0, sizeof x); x.tipo = tipo; return x;
 }
 
-/* ------------------------------------------------------------------------
- * Avance de un agente en un tick. Funcion PURA: mismos argumentos => mismo
- * resultado. Se invoca desde la celda destino Y desde la celda origen, que
- * la usan para llegar de forma independiente a la misma conclusion sin
- * comunicarse entre si. Ahi esta la clave de que la etapa APLICAR no
- * necesite sincronizacion.
- * ---------------------------------------------------------------------- */
 typedef struct {
     Celda ag;
     int   vivo;
@@ -215,15 +174,6 @@ void fase_plantas(Mundo *m, const Config *c, int tick)
     }
 }
 
-/* ========================================================================
- * FASES 2 y 3: HERBIVOROS y CARNIVOROS
- *
- * Regla de destinos validos: un agente solo puede moverse a una celda que al
- * INICIO de la fase estuviera vacia o contuviera a su presa. Consecuencia
- * util: una celda ocupada por un agente de la fase actual nunca es destino
- * valido, asi que "recibir a alguien" y "marcharse" son mutuamente
- * excluyentes. Eso elimina de raiz el read-write hazard del enunciado.
- * ====================================================================== */
 void fase_agentes(Mundo *m, const Config *c, int tick, int tipo)
 {
     const int            n = m->n, W = m->W, H = m->H;
@@ -307,8 +257,6 @@ void fase_agentes(Mundo *m, const Config *c, int tick, int tipo)
             const int dst = P[i].dst;
 
             if (dst >= 0 && G[dst] == i) {
-                /* Gano su destino: se marcha. Recalcula su propio avance para
-                 * decidir si deja cria en esta celda. */
                 r = avanzar(cur, (A[dst].tipo == presa), 1, c, tipo);
                 B[i] = (r.vivo && r.reproduce) ? celda_nueva((unsigned char)tipo)
                                                : celda_vacia();

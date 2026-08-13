@@ -1,13 +1,3 @@
-/* ============================================================================
- * sim.c - Bucle de ticks.
- *
- * Detalle de rendimiento importante: la region `omp parallel` envuelve al
- * bucle de ticks COMPLETO, no a cada bucle interno. Con T ticks y 3 fases de
- * 3 barridos cada una, la version ingenua (`#pragma omp parallel for` en cada
- * bucle) pagaria 9*T fork/join; esta version paga exactamente 1. La
- * coordinacion entre etapas se consigue con las barreras implicitas de
- * `omp for` y `omp single`, que son mucho mas baratas.
- * ==========================================================================*/
 #include <stdio.h>
 
 #ifdef _OPENMP
@@ -72,8 +62,7 @@ double simular(Mundo *m, const Config *c, FILE *flog)
 #endif
     {
         int  tick, i;
-        long lP, lH, lC;   /* acumuladores privados: evitan el false sharing
-                            * de un arreglo contador[hilo] sin padding */
+        long lP, lH, lC;   
 
         for (tick = 1; tick <= c->ticks; tick++) {
 

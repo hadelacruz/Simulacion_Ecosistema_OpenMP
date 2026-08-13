@@ -1,6 +1,3 @@
-/* ============================================================================
- * mundo.c - Creacion, inicializacion, doble buffer e impresion del ecosistema.
- * ==========================================================================*/
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,11 +33,6 @@ void mundo_liberar(Mundo *m)
     free(m);
 }
 
-/* ------------------------------------------------------------------------
- * Inicializacion determinista: el contenido de cada celda depende solo de
- * (semilla, indice). No se usa rand(), asi que la poblacion inicial es
- * identica corrida tras corrida y con cualquier numero de hilos.
- * ---------------------------------------------------------------------- */
 void mundo_inicializar(Mundo *m, const Config *c)
 {
     const double u1 = c->dens_planta;
@@ -48,9 +40,6 @@ void mundo_inicializar(Mundo *m, const Config *c)
     const double u3 = u2 + c->dens_carn;
     int i;
 
-    /* Este bucle tambien realiza el "first touch" de la memoria: cada hilo
-     * escribe por primera vez las paginas que despues procesara, lo que en
-     * maquinas NUMA deja los datos en el banco de memoria correcto. */
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -83,10 +72,7 @@ void mundo_inicializar(Mundo *m, const Config *c)
     }
 }
 
-/* ------------------------------------------------------------------------
- * Intercambio de buffers. Es O(1): solo se permutan punteros, nunca se copia
- * el grid. Debe ejecutarse por UN solo hilo (ver `omp single` en sim.c).
- * ---------------------------------------------------------------------- */
+
 void mundo_swap(Mundo *m)
 {
     Celda *t = m->a;

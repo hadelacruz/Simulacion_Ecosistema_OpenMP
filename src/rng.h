@@ -1,17 +1,3 @@
-/* ============================================================================
- * rng.h - Generador pseudoaleatorio DETERMINISTA POR CELDA
- *
- * Por que no rand():
- *   1. rand() no es thread-safe; en glibc usa un lock interno que serializa
- *      por completo la region paralela.
- *   2. Aunque se usara un estado por hilo, el valor consumido por una celda
- *      dependeria de que hilo la proceso => el resultado cambiaria con
- *      OMP_NUM_THREADS y seria imposible validar contra la version serial.
- *
- * Solucion: no hay estado. El valor aleatorio de una celda es una funcion
- * hash pura de (semilla, tick, fase, flujo, indice). Es reproducible bit a
- * bit con cualquier numero de hilos y con cualquier politica de scheduling.
- * ==========================================================================*/
 #ifndef RNG_H
 #define RNG_H
 
@@ -26,9 +12,6 @@ static inline uint32_t rng_mezcla(uint32_t x)
     return x;
 }
 
-/* Valor pseudoaleatorio de 32 bits asociado a una celda concreta.
- * `flujo` separa usos distintos dentro de la misma fase (probabilidad,
- * seleccion de vecino, clave de arbitraje) para que no esten correlacionados. */
 static inline uint32_t rng32(unsigned semilla, int tick, int fase,
                              int flujo, int idx)
 {

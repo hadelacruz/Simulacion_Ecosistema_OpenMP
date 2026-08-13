@@ -1,6 +1,3 @@
-/* ============================================================================
- * main.c - Interfaz de linea de comandos.
- * ==========================================================================*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -127,9 +124,6 @@ int config_parsear(Config *c, int argc, char **argv)
 /* ------------------------------------------------------------------------ */
 static int config_validar(const Config *c)
 {
-    /* W,H >= 3 es obligatorio: con 2 o menos, el vecindario toroidal repite
-     * indices y la relacion "s es vecino de d" deja de ser simetrica, que es
-     * justo la propiedad en la que se apoya la etapa RESOLVER. */
     if (c->W < 3 || c->H < 3) {
         fprintf(stderr, "Error: --w y --h deben ser >= 3.\n");
         return -1;
